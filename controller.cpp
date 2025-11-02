@@ -3,6 +3,7 @@
 
 Controller::Controller() {
     comm_gateway = new CommGateway();
+    comm_gateway->init();
     isCameraLoop = false;
 }
 

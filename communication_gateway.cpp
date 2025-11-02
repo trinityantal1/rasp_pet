@@ -1,10 +1,63 @@
 #include <iostream>
 #include <fstream> // For file logging
 #include <curl/curl.h>
+#include <algorithm>
 #include "communication_gateway.h"
+
 
 CommGateway::CommGateway() {
     
+}
+
+void CommGateway::init() {
+    std::ifstream secretFile("secrets.txt");
+    if (!secretFile.is_open()) {
+        std::cerr << "Failed to open secrets.txt" << std::endl;
+        return;
+    }
+
+    std::string line;
+    while (std::getline(secretFile, line)) {
+        // Remove not characters
+        line.erase(0, line.find_first_not_of(" \t\r\n"));
+        line.erase(line.find_last_not_of(" \t\r\n") + 1);
+
+        if (line.empty() || line[0] == '#') {
+            continue;
+        }
+
+        // Find the position of '=' and then skip the lines without it
+        std::size_t equalsPos = line.find('=');
+        if (equalsPos == std::string::npos)
+            continue; 
+
+        std::string key = line.substr(0, equalsPos);
+        std::string value = line.substr(equalsPos + 1);
+
+        // Remove not character again and semicolon at the end
+        key.erase(0, key.find_first_not_of(" \t"));
+        key.erase(key.find_last_not_of(" \t") + 1);
+        value.erase(0, value.find_first_not_of(" \t"));
+        value.erase(value.find_last_not_of(" \t;") + 1);
+        
+        if (!value.empty() && value[0] == '"')
+            value.erase(0, 1);
+        if (!value.empty() && value[value.length() - 1] == '"')
+            value.pop_back();
+
+        // Find the correct member variable
+        if (key == "account_sid") {
+            account_sid = value;
+        } else if (key == "auth_token") {
+            auth_token = value;
+        } else if (key == "from_number") {
+            from_number = value;
+        } else if (key == "to_number") {
+            to_number = value;
+        }
+    }
+
+    secretFile.close();
 }
 
 // Callback function to handle response (we'll just discard it for simplicity)
