@@ -15,6 +15,8 @@
 #include <libcamera/controls.h>
 #include <libcamera/property_ids.h>
 
+#include "camera_controller.h"
+#include "nn_controller.h"
 #include "communication_gateway.h"
 
 using namespace libcamera;
@@ -30,7 +32,10 @@ public:
     void stopCameraLoop();
     void testSMS();
     void testPhoneCall();
+    void consoleMenuHandler();
 private:
+    CameraController* cam_controller;
+    NNController* nn_controller;
     CommGateway* comm_gateway;
 
     std::shared_ptr<Camera> camera;
