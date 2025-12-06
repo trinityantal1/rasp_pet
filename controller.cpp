@@ -9,7 +9,6 @@ Controller::Controller() {
     comm_gateway = new CommGateway();
     comm_gateway->init();
 
-    isCameraLoop = false;
 }
 
 void Controller::checkIfAlive() {
@@ -18,12 +17,15 @@ void Controller::checkIfAlive() {
 
 void Controller::startCameraLoop() {
     std::cout << "Starting camera loop...\n";
-    // Placeholder for camera loop start logic
 }
 
 void Controller::stopCameraLoop() {
     std::cout << "Stopping camera loop...\n";
-    // Placeholder for camera loop stop logic
+}
+
+void Controller::captureCamera() {
+    std::cout << "Capturing camera snapshot\n";
+    cam_controller->TakePhotoToFile("capture_1.bmp");
 }
 
 void Controller::testSMS() {
@@ -39,10 +41,11 @@ void displayMenu() {
     std::cout << "1. Check if alive\n";
     std::cout << "2. Start camera loop\n";
     std::cout << "3. Stop camera loop\n";
-    std::cout << "4. Test SMS message\n";
-    std::cout << "5. Test phone call\n";
-    std::cout << "6. Exit\n";
-    std::cout << "Enter your choice (1-6): ";
+    std::cout << "4. Capture camera snapshot\n";
+    std::cout << "5. Test SMS message\n";
+    std::cout << "6. Test phone call\n";
+    std::cout << "7. Exit\n";
+    std::cout << "Enter your choice (1-7): ";
 }
 
 void Controller::consoleMenuHandler() {
@@ -72,16 +75,19 @@ void Controller::consoleMenuHandler() {
                 this->stopCameraLoop();
                 break;
             case 4:
-                this->testSMS();
+                this->captureCamera();
                 break;
             case 5:
-                this->testPhoneCall();
+                this->testSMS();
                 break;
             case 6:
+                this->testPhoneCall();
+                break;
+            case 7:
                 std::cout << "Exiting program.\n";
                 return;
             default:
-                std::cout << "Invalid choice. Please select a number between 1 and 6.\n";
+                std::cout << "Invalid choice. Please select a number between 1 and 7.\n";
         }
     }
 }

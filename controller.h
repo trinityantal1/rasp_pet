@@ -30,6 +30,7 @@ public:
     void checkIfAlive();
     void startCameraLoop();
     void stopCameraLoop();
+    void captureCamera();
     void testSMS();
     void testPhoneCall();
     void consoleMenuHandler();
@@ -38,16 +39,6 @@ private:
     NNController* nn_controller;
     CommGateway* comm_gateway;
 
-    std::shared_ptr<Camera> camera;
-    std::unique_ptr<CameraManager> cm;
-    std::unique_ptr<CameraConfiguration> config;
-    std::unique_ptr<FrameBufferAllocator> allocator;
-    std::unique_ptr<Request> request;
-    std::mutex mutex;
-    std::condition_variable cv;
-    bool isCameraLoop;
-    steady_clock::time_point start_time;
-    void requestComplete(Request *request);
 };
 
 #endif // CONTROLLER_H
