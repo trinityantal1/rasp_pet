@@ -31,6 +31,7 @@ public:
     void startCameraLoop();
     void stopCameraLoop();
     void captureCamera();
+    void testCategorise();
     void testSMS();
     void testPhoneCall();
     void consoleMenuHandler();

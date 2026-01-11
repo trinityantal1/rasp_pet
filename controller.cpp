@@ -27,6 +27,10 @@ void Controller::captureCamera() {
     std::cout << "Capturing camera snapshot\n";
     cam_controller->TakePhotoToFile("capture_1.bmp");
 }
+void Controller::testCategorise() {
+    std::cout << "Testing categorization\n";
+    nn_controller->categorise("../rasp_pet_resource/capture_dog1.bmp");
+}
 
 void Controller::testSMS() {
    comm_gateway->testSMS();
@@ -41,11 +45,12 @@ void displayMenu() {
     std::cout << "1. Check if alive\n";
     std::cout << "2. Start camera loop\n";
     std::cout << "3. Stop camera loop\n";
-    std::cout << "4. Capture camera snapshot\n";
-    std::cout << "5. Test SMS message\n";
-    std::cout << "6. Test phone call\n";
-    std::cout << "7. Exit\n";
-    std::cout << "Enter your choice (1-7): ";
+    std::cout << "4. Test capture camera snapshot\n";
+    std::cout << "5. Test categorise\n";
+    std::cout << "6. Test SMS message\n";
+    std::cout << "7. Test phone call\n";
+    std::cout << "8. Exit\n";
+    std::cout << "Enter your choice (1-8): ";
 }
 
 void Controller::consoleMenuHandler() {
@@ -78,16 +83,19 @@ void Controller::consoleMenuHandler() {
                 this->captureCamera();
                 break;
             case 5:
-                this->testSMS();
+                this->testCategorise();
                 break;
             case 6:
-                this->testPhoneCall();
+                this->testSMS();
                 break;
             case 7:
+                this->testPhoneCall();
+                break;
+            case 8:
                 std::cout << "Exiting program.\n";
                 return;
             default:
-                std::cout << "Invalid choice. Please select a number between 1 and 7.\n";
+                std::cout << "Invalid choice. Please select a number between 1 and 8.\n";
         }
     }
 }
