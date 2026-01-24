@@ -7,7 +7,7 @@
 
 int main() {
     Controller controller;
-    controller.consoleMenuHandler();
+    controller.ConsoleMenuHandler();
 
     return 0;
 }

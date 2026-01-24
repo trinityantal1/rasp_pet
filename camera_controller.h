@@ -16,9 +16,11 @@ public:
     CameraController ();
     void init();
 
+    void StartCameraLoop();
+    void StopCameraLoop();
     void TakePhotoToFile(std::string imgFilename);
+
     void ActivateCamera();
-    void DeactivateCamera();
 
     void CameraRequestComplete(libcamera::Request *request);
 
@@ -28,6 +30,9 @@ private: // for the callback function CameraRequestComplete()
     std::condition_variable m_cv;
     bool m_done = false;
     steady_clock::time_point m_start_time;
+    
+    bool m_isTakeOnlySinglePhotoMode = false;
+    bool m_isMonitoringMode = false;  // for continuous monitoring mode
 
     std::string m_imgFilename;
 };

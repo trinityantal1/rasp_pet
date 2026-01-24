@@ -9,5 +9,5 @@ bin/
 sms_log.txt
 # rasp_pet is .exe
 rasp_pet
-secrets.txt
+config.txt
 yolov3.weights

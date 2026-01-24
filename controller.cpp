@@ -11,36 +11,38 @@ Controller::Controller() {
 
 }
 
-void Controller::checkIfAlive() {
+void Controller::CheckIfAlive() {
     std::cout << "This program is alive\n";
 }
 
-void Controller::startCameraLoop() {
+void Controller::StartCameraLoop() {
     std::cout << "Starting camera loop...\n";
+    cam_controller->StartCameraLoop();
 }
 
-void Controller::stopCameraLoop() {
+void Controller::StopCameraLoop() {
     std::cout << "Stopping camera loop...\n";
+    cam_controller->StopCameraLoop();
 }
 
-void Controller::captureCamera() {
+void Controller::CaptureCamera() {
     std::cout << "Capturing camera snapshot\n";
     cam_controller->TakePhotoToFile("capture_1.bmp");
 }
-void Controller::testCategorise() {
+void Controller::TestCategorise() {
     std::cout << "Testing categorization\n";
     nn_controller->categorise("../rasp_pet_resource/capture_dog1.bmp");
 }
 
-void Controller::testSMS() {
-   comm_gateway->testSMS();
+void Controller::TestSMS() {
+   comm_gateway->TestSMS();
 }
 
-void Controller::testPhoneCall() {
-    comm_gateway->testPhoneCall();
+void Controller::TestPhoneCall() {
+    comm_gateway->TestPhoneCall();
 }
 
-void displayMenu() {
+void DisplayMenu() {
     std::cout << "\n=== Console Menu ===\n";
     std::cout << "1. Check if alive\n";
     std::cout << "2. Start camera loop\n";
@@ -53,12 +55,13 @@ void displayMenu() {
     std::cout << "Enter your choice (1-8): ";
 }
 
-void Controller::consoleMenuHandler() {
+void Controller::ConsoleMenuHandler() {
 
+    std::cout << "Main Thread ID: " << std::this_thread::get_id() << "\n"; // to check if camera loop will run in separate thread
     int choice;
 
     while (true) {
-        displayMenu();
+        DisplayMenu();
         std::cin >> choice;
 
         if (std::cin.fail()) {
@@ -71,25 +74,25 @@ void Controller::consoleMenuHandler() {
         switch (choice) {
             int a;
             case 1:
-                this->checkIfAlive();
+                this->CheckIfAlive();
                 break;
             case 2:
-                this->startCameraLoop();
+                this->StartCameraLoop();
                 break;
             case 3:
-                this->stopCameraLoop();
+                this->StopCameraLoop();
                 break;
             case 4:
-                this->captureCamera();
+                this->CaptureCamera();
                 break;
             case 5:
-                this->testCategorise();
+                this->TestCategorise();
                 break;
             case 6:
-                this->testSMS();
+                this->TestSMS();
                 break;
             case 7:
-                this->testPhoneCall();
+                this->TestPhoneCall();
                 break;
             case 8:
                 std::cout << "Exiting program.\n";

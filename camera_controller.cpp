@@ -3,6 +3,7 @@
 
 #include <fstream>
 #include <sys/mman.h>
+#include <thread>
 
 using namespace libcamera;
 using namespace std::chrono_literals;
@@ -25,11 +26,13 @@ static void requestComplete(Request *request)
 }
 
 void CameraController::CameraRequestComplete(Request* request) {
+    std::cout << "Thread ID: " << std::this_thread::get_id() << "\n";
     std::cout << "requestComplete() 1" << std::endl;
 
     if (request->status() == Request::RequestCancelled)
         return;
 
+    std::cout << "requestComplete() 2" << std::endl;
     const ControlList &metadata = request->metadata();
 
     bool aeConverged = false;
@@ -57,6 +60,7 @@ void CameraController::CameraRequestComplete(Request* request) {
 
     auto now = steady_clock::now();
     auto duration = duration_cast<seconds>(now - m_start_time).count();
+    std::cout << "requestComplete() 3" << std::endl;
 
     // if (!(aeConverged && afConverged) && duration < 5) {  // 5 second
     if (!aeConverged && duration < 5) {  // 5 second
@@ -65,6 +69,8 @@ void CameraController::CameraRequestComplete(Request* request) {
         m_camera->queueRequest(request);
         return;
     }
+
+    std::cout << "requestComplete() 4" << std::endl;
 
     // Converged or timeout, save the image
     const auto &buffers = request->buffers();
@@ -81,6 +87,7 @@ void CameraController::CameraRequestComplete(Request* request) {
         std::cerr << "Failed to mmap buffer" << std::endl;
         return;
     }
+    std::cout << "requestComplete() 5" << std::endl;
 
     // Save to BMP file
     std::ofstream out(m_imgFilename, std::ios::binary);
@@ -146,12 +153,35 @@ void CameraController::CameraRequestComplete(Request* request) {
 
     std::cout << "Image saved to capture.bmp" << std::endl;
 
-    // Signal completion
-    {
-        std::lock_guard<std::mutex> lock(m_mutex);
-        m_done = true;
+    if (this->m_isTakeOnlySinglePhotoMode) { // terminal condition for the infinte recursive loop
+        std::cout << "Single photo taken, not continuing camera loop." << std::endl;
+        // Signal completion
+        {
+            std::lock_guard<std::mutex> lock(m_mutex);
+            m_done = true;
+        }
+        m_cv.notify_one();
+        m_isTakeOnlySinglePhotoMode = false; // sets initial value
+        return; // terminate infinte recursive camera loop
+    } else {
+        std::cout << "Continuing camera loop..." << std::endl;
+        // Reuse and queue again for camera loop
+        request->reuse(Request::ReuseBuffers);
+        m_camera->queueRequest(request);
+        return;
     }
-    m_cv.notify_one();
+}
+
+void CameraController::StartCameraLoop() {
+    std::cout << "CC: Starting camera loop...\n";
+    m_isMonitoringMode = true;
+    std::thread* thread1 = new std::thread(&CameraController::ActivateCamera, this); // Create one thread and start it immediately
+    std::cout << "New thread created - main thread continues running...\n";
+}
+
+void CameraController::StopCameraLoop() {
+    std::cout << "CC: Stopping camera loop...\n";
+    m_isMonitoringMode = false;
 }
 
 void CameraController::TakePhotoToFile(std::string imgFilename) {
@@ -159,6 +189,15 @@ void CameraController::TakePhotoToFile(std::string imgFilename) {
     std::cout << "Debug 1" << std::endl;
 
     this->m_imgFilename = imgFilename;
+    m_isTakeOnlySinglePhotoMode = true; // take single photo;
+
+    std::thread* thread1 = new std::thread(&CameraController::ActivateCamera, this); // Create one thread and start it immediately
+
+    std::cout << "New thread created - main thread continues running...\n";
+    // std::this_thread::sleep_for(std::chrono::milliseconds(9500));
+}
+
+void CameraController::ActivateCamera() {
     std::unique_ptr<CameraManager> cm = std::make_unique<CameraManager>();
     int ret = cm->start();
     if (ret) {
@@ -262,7 +301,7 @@ void CameraController::TakePhotoToFile(std::string imgFilename) {
         return;
     }
 
-    std::cout << "Debug 11" << std::endl;
+    std::cout << "Debug 11. Waiting for completion..." << std::endl;
 
     // Wait for completion
     {
@@ -270,16 +309,13 @@ void CameraController::TakePhotoToFile(std::string imgFilename) {
         m_cv.wait(lock, [] { return g_cameraController->m_done; });
     }
 
+    std::cout << "Debug 11...\n";
+
     m_camera->stop();
     m_camera->release();
     m_camera.reset();
-}
-
-void CameraController::ActivateCamera() {
-
-}
-
-void CameraController::DeactivateCamera() {
-    
+    // cm->stop();  // should release camera manager, fix it later
+    // cm.reset();
+    // delete cm;
 }
 

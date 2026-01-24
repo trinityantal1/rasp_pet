@@ -27,14 +27,14 @@ class Controller {
 public:
     Controller();
     ~Controller();
-    void checkIfAlive();
-    void startCameraLoop();
-    void stopCameraLoop();
-    void captureCamera();
-    void testCategorise();
-    void testSMS();
-    void testPhoneCall();
-    void consoleMenuHandler();
+    void CheckIfAlive();
+    void StartCameraLoop();
+    void StopCameraLoop();
+    void CaptureCamera();
+    void TestCategorise();
+    void TestSMS();
+    void TestPhoneCall();
+    void ConsoleMenuHandler();
 private:
     CameraController* cam_controller;
     NNController* nn_controller;

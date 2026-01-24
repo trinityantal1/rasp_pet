@@ -5,8 +5,8 @@ class CommGateway {
 public:
     CommGateway();
     void init();
-    void testSMS();
-    void testPhoneCall();
+    void TestSMS();
+    void TestPhoneCall();
 
 private:
     std::string account_sid = "";

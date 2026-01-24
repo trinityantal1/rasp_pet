@@ -10,9 +10,9 @@ CommGateway::CommGateway() {
 }
 
 void CommGateway::init() {
-    std::ifstream secretFile("secrets.txt");
+    std::ifstream secretFile("config.txt");
     if (!secretFile.is_open()) {
-        std::cerr << "Failed to open secrets.txt" << std::endl;
+        std::cerr << "Failed to open config.txt" << std::endl;
         return;
     }
 
@@ -60,39 +60,35 @@ void CommGateway::init() {
     secretFile.close();
 }
 
-// Callback function to handle response (we'll just discard it for simplicity)
-size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
+size_t TwillioResultCallback(void* contents, size_t size, size_t nmemb, void* userp) {
     size_t total_size = size * nmemb;
     std::string data(static_cast<char*>(contents), total_size);
 
     // Log to console
-    std::cout << "WriteCallback: Received " << total_size << " bytes\n";
-    // Optionally print response data (be cautious with large responses)
-    std::cout << "Response data: " << data.substr(0, 100) << "..." << std::endl; // Limit output for brevity
+    std::cout << "TwillioResultCallback: Received " << total_size << " bytes\n";
+    std::cout << "Response data: " << data.substr(0, 100) << "..." << std::endl;
 
     // Log to file
     std::ofstream log_file("sms_log.txt", std::ios::app);
     if (!log_file.is_open()) {
-        std::cerr << "WriteCallback: Failed to open log file 'sms_log.txt'" << std::endl;
-        return 0; // Indicate error to curl
+        std::cerr << "TwillioResultCallback: Failed to open log file 'sms_log.txt'" << std::endl;
+        return 0;
     }
 
-    log_file << "WriteCallback: Received " << total_size << " bytes\n";
+    log_file << "TwillioResultCallback: Received " << total_size << " bytes\n";
     log_file << "Response data: " << data << "\n";
     log_file.close();
 
-    // Check for specific error indicators in the response (e.g., Twilio error)
+    // Check for specific error indicators
     if (data.find("error") != std::string::npos || data.find("Error") != std::string::npos) {
-        std::cerr << "WriteCallback: Potential error in response: " << data.substr(0, 100) << "..." << std::endl;
-        // Optionally, return 0 to signal an error to curl, but for now, we continue
+        std::cerr << "TwillioResultCallback: Potential error in response: " << data.substr(0, 100) << "..." << std::endl;
     }
 
     return total_size; // Return the number of bytes processed
 }
 
-void CommGateway::testSMS() {
+void CommGateway::TestSMS() {
     std::cout << "Testing SMS message: Sending test message...\n";
-    // Placeholder for SMS test logic
     std::string message = "Cat detected, open the door";
 
     
@@ -102,7 +98,7 @@ void CommGateway::testSMS() {
         std::string url = "https://api.twilio.com/2010-04-01/Accounts/" + account_sid + "/Messages.json";
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 
-        // Basic Auth: SID:Token (base64 encoded internally by curl)
+        // Basic Auth: SID:Token
         std::string credentials = account_sid + ":" + auth_token;
         curl_easy_setopt(curl, CURLOPT_USERNAME, account_sid.c_str());
         curl_easy_setopt(curl, CURLOPT_PASSWORD, auth_token.c_str());
@@ -125,7 +121,7 @@ void CommGateway::testSMS() {
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
 
         // Response handler
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, TwillioResultCallback);
 
         // Perform request
         CURLcode res = curl_easy_perform(curl);
@@ -148,7 +144,7 @@ void CommGateway::testSMS() {
 
 }
 
-void CommGateway::testPhoneCall() {
+void CommGateway::TestPhoneCall() {
     std::cout << "Testing phone call: Initiating test call...\n";
     // Placeholder for phone call test logic
 }
