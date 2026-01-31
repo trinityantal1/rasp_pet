@@ -17,7 +17,7 @@ void Controller::CheckIfAlive() {
 
 void Controller::StartCameraLoop() {
     std::cout << "Starting camera loop...\n";
-    cam_controller->StartCameraLoop();
+    cam_controller->StartCameraLoop(this);
 }
 
 void Controller::StopCameraLoop() {
@@ -27,7 +27,7 @@ void Controller::StopCameraLoop() {
 
 void Controller::CaptureCamera() {
     std::cout << "Capturing camera snapshot\n";
-    cam_controller->TakePhotoToFile("capture_1.bmp");
+    cam_controller->TakePhotoToFile("takephoto.bmp");
 }
 void Controller::TestCategorise() {
     std::cout << "Testing categorization\n";
@@ -101,6 +101,10 @@ void Controller::ConsoleMenuHandler() {
                 std::cout << "Invalid choice. Please select a number between 1 and 8.\n";
         }
     }
+}
+
+void Controller::AnalyseImage(const std::string& imgFilename) {
+    std::cout << "Analysing image: " << imgFilename << std::endl;
 }
 
 Controller::~Controller() {

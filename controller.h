@@ -35,6 +35,8 @@ public:
     void TestSMS();
     void TestPhoneCall();
     void ConsoleMenuHandler();
+
+    void AnalyseImage(const std::string& imgFilename);
 private:
     CameraController* cam_controller;
     NNController* nn_controller;

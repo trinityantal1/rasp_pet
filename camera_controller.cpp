@@ -1,5 +1,5 @@
 #include "camera_controller.h"
-
+#include "controller.h"
 
 #include <fstream>
 #include <sys/mman.h>
@@ -58,102 +58,109 @@ void CameraController::CameraRequestComplete(Request* request) {
         }
     }
 
-    auto now = steady_clock::now();
-    auto duration = duration_cast<seconds>(now - m_start_time).count();
-    std::cout << "requestComplete() 3" << std::endl;
+    steady_clock::time_point now = steady_clock::now();
+    auto durationSec = duration_cast<seconds>(now - m_start_time).count();
 
-    // if (!(aeConverged && afConverged) && duration < 5) {  // 5 second
-    if (!aeConverged && duration < 5) {  // 5 second
-        // Not converged and no timeout, reuse and queue again
-        request->reuse(Request::ReuseBuffers);
-        m_camera->queueRequest(request);
-        return;
+    bool isLoopLongerThan5Sec = (durationSec >= 5);
+    bool isSaveBmp = aeConverged || isLoopLongerThan5Sec;
+
+    bool isTerminate;
+    if (m_isTakeOnlySinglePhotoMode) {
+        isTerminate = isSaveBmp; // terminate after saving single photo
+        if (isTerminate) // reset the flag only if we are terminating
+            m_isTakeOnlySinglePhotoMode = false;
+    }
+    else { // we should be in the MonitoringMode
+        isTerminate = !m_isMonitoringMode;
     }
 
-    std::cout << "requestComplete() 4" << std::endl;
+    //std::cout << "requestComplete() 3" << std::endl;
+    // std::cout << "AE Converged: " << aeConverged << " isSaveBmp: " << isSaveBmp << " isTerminate: " << isTerminate << " m_isTakeOnlySinglePhotoMode: " << m_isTakeOnlySinglePhotoMode << std::endl;
 
-    // Converged or timeout, save the image
-    const auto &buffers = request->buffers();
-    auto bufferPair = *buffers.begin();
-    FrameBuffer *buffer = bufferPair.second;
-    const Stream *stream = bufferPair.first;
+    if (isSaveBmp) {
+        // Converged or timeout, save the image
+        const auto &buffers = request->buffers();
+        auto bufferPair = *buffers.begin();
+        FrameBuffer *buffer = bufferPair.second;
+        const Stream *stream = bufferPair.first;
 
-    const StreamConfiguration &cfg = stream->configuration();
+        const StreamConfiguration &cfg = stream->configuration();
 
-    // Map the buffer memory
-    const FrameBuffer::Plane &plane = buffer->planes()[0];
-    void *data = mmap(nullptr, plane.length, PROT_READ, MAP_SHARED, plane.fd.get(), 0);
-    if (data == MAP_FAILED) {
-        std::cerr << "Failed to mmap buffer" << std::endl;
-        return;
-    }
-    std::cout << "requestComplete() 5" << std::endl;
-
-    // Save to BMP file
-    std::ofstream out(m_imgFilename, std::ios::binary);
-    // std::ofstream out("capture_2.bmp", std::ios::binary);
-    if (!out) {
-        std::cerr << "Failed to open output file" << std::endl;
-        munmap(data, plane.length);
-        return;
-    }
-
-    uint32_t width = cfg.size.width;
-    uint32_t height = cfg.size.height;
-    uint32_t stride = cfg.stride;  // Use the stream's stride for row length
-    uint32_t bpp = 3;  // Bytes per pixel for BGR888
-    uint32_t row_size = ((width * bpp + 3) / 4) * 4;  // Padded to multiple of 4
-    uint32_t image_size = row_size * height;
-    uint32_t file_size = 54 + image_size;
-
-    // BMP file header (14 bytes)
-    out.write("BM", 2);
-    out.write(reinterpret_cast<const char *>(&file_size), 4);
-    uint32_t reserved = 0;
-    out.write(reinterpret_cast<const char *>(&reserved), 4);
-    uint32_t offset = 54;
-    out.write(reinterpret_cast<const char *>(&offset), 4);
-
-    // BMP info header (40 bytes)
-    uint32_t info_size = 40;
-    out.write(reinterpret_cast<const char *>(&info_size), 4);
-    out.write(reinterpret_cast<const char *>(&width), 4);
-    uint32_t bmp_height = height;  // Positive for bottom-up
-    out.write(reinterpret_cast<const char *>(&bmp_height), 4);
-    uint16_t planes = 1;
-    out.write(reinterpret_cast<const char *>(&planes), 2);
-    uint16_t bit_count = 24;
-    out.write(reinterpret_cast<const char *>(&bit_count), 2);
-    uint32_t compression = 0;
-    out.write(reinterpret_cast<const char *>(&compression), 4);
-    out.write(reinterpret_cast<const char *>(&image_size), 4);
-    uint32_t x_ppm = 2835;  // 72 dpi
-    out.write(reinterpret_cast<const char *>(&x_ppm), 4);
-    uint32_t y_ppm = 2835;
-    out.write(reinterpret_cast<const char *>(&y_ppm), 4);
-    uint32_t clr_used = 0;
-    out.write(reinterpret_cast<const char *>(&clr_used), 4);
-    uint32_t clr_important = 0;
-    out.write(reinterpret_cast<const char *>(&clr_important), 4);
-
-    // Write pixel data (bottom-up)
-    const char *img_data = static_cast<const char *>(data);
-    for (int32_t y = height - 1; y >= 0; --y) {
-        out.write(img_data + y * stride, width * bpp);
-        // Add padding if necessary
-        uint32_t pad = row_size - (width * bpp);
-        if (pad > 0) {
-            char pad_bytes[3] = {0, 0, 0};
-            out.write(pad_bytes, pad);
+        // Map the buffer memory
+        const FrameBuffer::Plane &plane = buffer->planes()[0];
+        void *data = mmap(nullptr, plane.length, PROT_READ, MAP_SHARED, plane.fd.get(), 0);
+        if (data == MAP_FAILED) {
+            std::cerr << "Failed to mmap buffer" << std::endl;
+            return;
         }
+        std::cout << "requestComplete() 5" << std::endl;
+
+        // Save to BMP file
+        std::ofstream out(m_imgFilename, std::ios::binary);
+        // std::ofstream out("capture_2.bmp", std::ios::binary);
+        if (!out) {
+            std::cerr << "Failed to open output file" << std::endl;
+            munmap(data, plane.length);
+            return;
+        }
+
+        uint32_t width = cfg.size.width;
+        uint32_t height = cfg.size.height;
+        uint32_t stride = cfg.stride;  // Use the stream's stride for row length
+        uint32_t bpp = 3;  // Bytes per pixel for BGR888
+        uint32_t row_size = ((width * bpp + 3) / 4) * 4;  // Padded to multiple of 4
+        uint32_t image_size = row_size * height;
+        uint32_t file_size = 54 + image_size;
+
+        // BMP file header (14 bytes)
+        out.write("BM", 2);
+        out.write(reinterpret_cast<const char *>(&file_size), 4);
+        uint32_t reserved = 0;
+        out.write(reinterpret_cast<const char *>(&reserved), 4);
+        uint32_t offset = 54;
+        out.write(reinterpret_cast<const char *>(&offset), 4);
+
+        // BMP info header (40 bytes)
+        uint32_t info_size = 40;
+        out.write(reinterpret_cast<const char *>(&info_size), 4);
+        out.write(reinterpret_cast<const char *>(&width), 4);
+        uint32_t bmp_height = height;  // Positive for bottom-up
+        out.write(reinterpret_cast<const char *>(&bmp_height), 4);
+        uint16_t planes = 1;
+        out.write(reinterpret_cast<const char *>(&planes), 2);
+        uint16_t bit_count = 24;
+        out.write(reinterpret_cast<const char *>(&bit_count), 2);
+        uint32_t compression = 0;
+        out.write(reinterpret_cast<const char *>(&compression), 4);
+        out.write(reinterpret_cast<const char *>(&image_size), 4);
+        uint32_t x_ppm = 2835;  // 72 dpi
+        out.write(reinterpret_cast<const char *>(&x_ppm), 4);
+        uint32_t y_ppm = 2835;
+        out.write(reinterpret_cast<const char *>(&y_ppm), 4);
+        uint32_t clr_used = 0;
+        out.write(reinterpret_cast<const char *>(&clr_used), 4);
+        uint32_t clr_important = 0;
+        out.write(reinterpret_cast<const char *>(&clr_important), 4);
+
+        // Write pixel data (bottom-up)
+        const char *img_data = static_cast<const char *>(data);
+        for (int32_t y = height - 1; y >= 0; --y) {
+            out.write(img_data + y * stride, width * bpp);
+            // Add padding if necessary
+            uint32_t pad = row_size - (width * bpp);
+            if (pad > 0) {
+                char pad_bytes[3] = {0, 0, 0};
+                out.write(pad_bytes, pad);
+            }
+        }
+
+        out.close();
+        munmap(data, plane.length);
     }
-
-    out.close();
-    munmap(data, plane.length);
-
     std::cout << "Image saved to capture.bmp" << std::endl;
 
-    if (this->m_isTakeOnlySinglePhotoMode) { // terminal condition for the infinte recursive loop
+
+    if (isTerminate) { // terminal condition for the infinte recursive loop
         std::cout << "Single photo taken, not continuing camera loop." << std::endl;
         // Signal completion
         {
@@ -161,9 +168,12 @@ void CameraController::CameraRequestComplete(Request* request) {
             m_done = true;
         }
         m_cv.notify_one();
-        m_isTakeOnlySinglePhotoMode = false; // sets initial value
         return; // terminate infinte recursive camera loop
     } else {
+        if (m_isMonitoringMode) {
+            m_controller->AnalyseImage(m_imgFilename);
+        }
+
         std::cout << "Continuing camera loop..." << std::endl;
         // Reuse and queue again for camera loop
         request->reuse(Request::ReuseBuffers);
@@ -172,8 +182,9 @@ void CameraController::CameraRequestComplete(Request* request) {
     }
 }
 
-void CameraController::StartCameraLoop() {
+void CameraController::StartCameraLoop(Controller* controller) {
     std::cout << "CC: Starting camera loop...\n";
+    m_controller = controller;
     m_isMonitoringMode = true;
     std::thread* thread1 = new std::thread(&CameraController::ActivateCamera, this); // Create one thread and start it immediately
     std::cout << "New thread created - main thread continues running...\n";

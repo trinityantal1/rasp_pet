@@ -9,6 +9,8 @@
 #include <libcamera/controls.h>
 #include <libcamera/property_ids.h>
 
+class Controller;
+
 using namespace std::chrono;
 
 class CameraController {
@@ -16,7 +18,7 @@ public:
     CameraController ();
     void init();
 
-    void StartCameraLoop();
+    void StartCameraLoop(Controller* controller);
     void StopCameraLoop();
     void TakePhotoToFile(std::string imgFilename);
 
@@ -35,6 +37,8 @@ private: // for the callback function CameraRequestComplete()
     bool m_isMonitoringMode = false;  // for continuous monitoring mode
 
     std::string m_imgFilename;
+
+    Controller* m_controller; // to call AnalyseImage
 };
 
 #endif // CAM_CONTROLLER
