@@ -8,7 +8,7 @@ public:
     void init();
     void CatMatch();
     void DogMatch();
-    void categorise(std::string imgFilename);
+    bool categorise(std::string imgFilename);
     void NMS();
 
 private:

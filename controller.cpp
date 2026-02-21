@@ -35,11 +35,11 @@ void Controller::TestCategorise() {
 }
 
 void Controller::TestSMS() {
-   comm_gateway->TestSMS();
+   comm_gateway->SendSMS("Testing SMS");
 }
 
 void Controller::TestPhoneCall() {
-    comm_gateway->TestPhoneCall();
+    comm_gateway->SendPhoneCall("Testing Phone Call");
 }
 
 void DisplayMenu() {
@@ -105,6 +105,14 @@ void Controller::ConsoleMenuHandler() {
 
 void Controller::AnalyseImage(const std::string& imgFilename) {
     std::cout << "Analysing image: " << imgFilename << std::endl;
+
+    bool hasCatOrDog = nn_controller->categorise(imgFilename);
+    std::cout << (hasCatOrDog ? "Cat or dog detected!" : "No cat or dog detected.") << std::endl;
+
+    if (hasCatOrDog) {
+        comm_gateway->SendAlert();
+        // comm_gateway->SendPhoneCall("Cat or dog detected. Open the door.");
+    }
 }
 
 Controller::~Controller() {

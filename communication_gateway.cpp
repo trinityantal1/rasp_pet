@@ -4,9 +4,10 @@
 #include <algorithm>
 #include "communication_gateway.h"
 
+using namespace std::chrono;
 
 CommGateway::CommGateway() {
-    
+    steady_clock::time_point last_alert_time = steady_clock::time_point::min();
 }
 
 void CommGateway::init() {
@@ -87,9 +88,9 @@ size_t TwillioResultCallback(void* contents, size_t size, size_t nmemb, void* us
     return total_size; // Return the number of bytes processed
 }
 
-void CommGateway::TestSMS() {
-    std::cout << "Testing SMS message: Sending test message...\n";
-    std::string message = "Cat detected, open the door";
+void CommGateway::SendSMS(std::string message) {
+    std::cout << "Sending SMS message\n";
+    // std::string message = "Cat detected, open the door";
 
     
     CURL* curl = curl_easy_init();
@@ -144,7 +145,21 @@ void CommGateway::TestSMS() {
 
 }
 
-void CommGateway::TestPhoneCall() {
-    std::cout << "Testing phone call: Initiating test call...\n";
-    // Placeholder for phone call test logic
+void CommGateway::SendPhoneCall(std::string message) {
+    std::cout << "Making phone call: \n";
+
+}
+
+void CommGateway::SendAlert() {
+    std::cout << "Sending alert: \n";
+
+    steady_clock::time_point now = steady_clock::now();
+    seconds durationSinceLastAlert = duration_cast<seconds>(now - last_alert_time);
+    if (durationSinceLastAlert < seconds(CommGateway::ALERT_SUPPRESSION_SECONDS)) { // e.g. 10 minutes
+        std::cout << "Alert already sent recently. Suppressing duplicate alert.\n";
+        return;
+    } else {
+        last_alert_time = now;
+        SendSMS("Cat or dog detected. Open the door.");
+    }
 }

@@ -157,7 +157,7 @@ void CameraController::CameraRequestComplete(Request* request) {
         out.close();
         munmap(data, plane.length);
     }
-    std::cout << "Image saved to capture.bmp" << std::endl;
+    std::cout << "Image saved to " << m_imgFilename << std::endl;
 
 
     if (isTerminate) { // terminal condition for the infinte recursive loop
@@ -171,7 +171,7 @@ void CameraController::CameraRequestComplete(Request* request) {
         return; // terminate infinte recursive camera loop
     } else {
         if (m_isMonitoringMode) {
-            m_controller->AnalyseImage(m_imgFilename);
+           // m_controller->AnalyseImage(m_imgFilename);
         }
 
         std::cout << "Continuing camera loop..." << std::endl;

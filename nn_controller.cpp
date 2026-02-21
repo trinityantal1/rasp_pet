@@ -26,7 +26,7 @@ NNController::NNController() {
 void NNController::init() {
 }
 
-void NNController::categorise(std::string imgFilename) {
+bool NNController::categorise(std::string imgFilename) {
     std::cout << "Categorising image: " << imgFilename << std::endl;
 
     string cfgFile = "yolov3.cfg";
@@ -48,7 +48,7 @@ void NNController::categorise(std::string imgFilename) {
     Mat img = imread(imgFilename);
     if (img.empty()) {
         cout << "Could not load image: " << imgFilename << endl;
-        return;
+        return false;
     }
 
     // Load YOLO network
@@ -143,4 +143,5 @@ void NNController::categorise(std::string imgFilename) {
     }
 
     cout << "Annotated image saved as: " << outputPath << endl;
+    return hasCatOrDog;
 }
