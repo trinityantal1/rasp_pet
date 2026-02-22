@@ -171,7 +171,7 @@ void CameraController::CameraRequestComplete(Request* request) {
         return; // terminate infinte recursive camera loop
     } else {
         if (m_isMonitoringMode) {
-           // m_controller->AnalyseImage(m_imgFilename);
+            m_controller->AnalyseImage(m_imgFilename);
         }
 
         std::cout << "Continuing camera loop..." << std::endl;

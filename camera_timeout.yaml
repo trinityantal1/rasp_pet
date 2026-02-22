@@ -1,0 +1,7 @@
+{
+  "version": 1.0,
+  "target": "pisp", # use pisp for rasp pi 5
+  "pipeline_handler": {
+    "camera_timeout_value_ms": 10000
+  }
+}

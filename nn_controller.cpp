@@ -1,13 +1,7 @@
 #include "nn_controller.h"
 #include <iostream>
-#include <opencv2/opencv.hpp>
 #include <fstream>
-#include <vector>
 #include <sstream>
-
-using namespace cv;
-using namespace cv::dnn::dnn4_v20220524;
-using namespace std;
 
 // Class names from COCO dataset (only showing relevant ones; load full from file)
 vector<string> loadClasses(const string& classFile) {
@@ -24,18 +18,12 @@ NNController::NNController() {
 }
 
 void NNController::init() {
-}
-
-bool NNController::categorise(std::string imgFilename) {
-    std::cout << "Categorising image: " << imgFilename << std::endl;
-
+    // Load categorisation classes from coco.names.txt
+    string classesFile = "coco.names.txt";
     string cfgFile = "yolov3.cfg";
     string weightsFile = "yolov3.weights";
-    string classesFile = "coco.names.txt";
-    string outputPath = "output.jpg";
 
-    // Load categorisation classes from coco.names.txt
-    vector<string> classes = loadClasses(classesFile);
+    classes = loadClasses(classesFile);
     cout << "Loaded " << classes.size() << " classes." << endl;
     // for (size_t i = 0; i < classes.size(); i++)
     // {
@@ -43,6 +31,17 @@ bool NNController::categorise(std::string imgFilename) {
     // }
     // for debugging
 
+    // Load YOLO network
+    net = readNetFromDarknet(cfgFile, weightsFile);
+    net.setPreferableBackend(DNN_BACKEND_OPENCV);
+    net.setPreferableTarget(DNN_TARGET_CPU);
+
+}
+
+bool NNController::categorise(std::string imgFilename) {
+    std::cout << "Categorising image: " << imgFilename << std::endl;
+
+    string outputPath = "output.jpg";
 
     // Load input image
     Mat img = imread(imgFilename);
@@ -50,11 +49,6 @@ bool NNController::categorise(std::string imgFilename) {
         cout << "Could not load image: " << imgFilename << endl;
         return false;
     }
-
-    // Load YOLO network
-    Net net = readNetFromDarknet(cfgFile, weightsFile);
-    net.setPreferableBackend(DNN_BACKEND_OPENCV);
-    net.setPreferableTarget(DNN_TARGET_CPU);
 
     // From input image create a blob for YOLO (YOLO input size: 416x416)
     Mat blob;
