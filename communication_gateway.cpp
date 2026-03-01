@@ -147,7 +147,70 @@ void CommGateway::SendSMS(std::string message) {
 
 void CommGateway::SendPhoneCall(std::string message) {
     std::cout << "Making phone call: \n";
+    if (message.empty()) {
+        std::cerr << "Cannot make call with empty message\n";
+        return;
+    }
 
+    CURL* curl = curl_easy_init();
+    if (!curl) {
+        std::cerr << "curl_easy_init() failed\n";
+        return;
+    }
+
+    //  URL for creating a new Call (not Messages)
+    std::string url = "https://api.twilio.com/2010-04-01/Accounts/" + account_sid + "/Calls.json";
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+
+    // Basic Auth (same as SMS)
+    curl_easy_setopt(curl, CURLOPT_USERNAME, account_sid.c_str());
+    curl_easy_setopt(curl, CURLOPT_PASSWORD, auth_token.c_str());
+
+    // Minimal TwiML that just speaks the message
+    // std::string twiml = "<Response><Say>" + message + "</Say><Pause length=\"2\"/><Say>" + message + "</Say></Response>";
+    std::string twiml = "<Response><Say>" + message + "</Say><Pause></Pause><Say>" + message + "</Say></Response>";
+
+    // Escape & " ' < > characters that might appear in the message
+    size_t pos = 0;
+    while ((pos = twiml.find("&", pos)) != std::string::npos) {
+        twiml.replace(pos, 1, "&amp;");
+        pos += 5;
+    }
+    pos = 0;
+    while ((pos = twiml.find("\"", pos)) != std::string::npos) {
+        twiml.replace(pos, 1, "&quot;");
+        pos += 6;
+    }
+
+    std::string post_data = "To=" + to_number + "&From=" + from_number + "&Twiml="  + twiml;
+
+    std::cout << "POST data: " << post_data << std::endl;
+
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post_data.c_str());
+
+    // Headers
+    struct curl_slist* headers = nullptr;
+    headers = curl_slist_append(headers, "Content-Type: application/x-www-form-urlencoded");
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);   // ? only for testing!
+
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, TwillioResultCallback);
+
+    // Execute
+    CURLcode res = curl_easy_perform(curl);
+
+    // Cleanup
+    curl_slist_free_all(headers);
+    curl_easy_cleanup(curl);
+
+    if (res != CURLE_OK) {
+        std::cerr << "curl_easy_perform() failed: " << curl_easy_strerror(res) << std::endl;
+        return;
+    }
+
+    std::cout << "Call initiated successfully!\n";
 }
 
 void CommGateway::SendAlert() {
@@ -160,6 +223,10 @@ void CommGateway::SendAlert() {
         return;
     } else {
         last_alert_time = now;
-        SendSMS("Cat or dog detected. Open the door.");
+        if (isSMSorVoice) {
+            SendSMS("Cat or dog detected. Open the door.");
+        } else {
+            SendPhoneCall("Cat or dog detected. Open the door.");
+        }
     }
 }

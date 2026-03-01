@@ -10,12 +10,13 @@ public:
     void SendPhoneCall(std::string message);
     void SendAlert();
 
+    bool isSMSorVoice = true; // true for SMS, false for voice call;
+
 private:
     std::string account_sid = "";
     std::string auth_token = "";
     std::string from_number = "";
     std::string to_number = "";
-    bool isSMSorVoice = true; // true for SMS, false for voice call;
     std::chrono::steady_clock::time_point last_alert_time;
 
     static constexpr int ALERT_SUPPRESSION_SECONDS = 600;  // 10 minutes

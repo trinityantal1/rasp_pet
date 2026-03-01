@@ -42,6 +42,7 @@ private:
     NNController* nn_controller;
     CommGateway* comm_gateway;
 
+    void DisplayMenu();
 };
 
 #endif // CONTROLLER_H

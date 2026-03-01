@@ -42,7 +42,7 @@ void Controller::TestPhoneCall() {
     comm_gateway->SendPhoneCall("Testing Phone Call");
 }
 
-void DisplayMenu() {
+void Controller::DisplayMenu() {
     std::cout << "\n=== Console Menu ===\n";
     std::cout << "1. Check if alive\n";
     std::cout << "2. Start camera loop\n";
@@ -51,8 +51,14 @@ void DisplayMenu() {
     std::cout << "5. Test categorise\n";
     std::cout << "6. Test SMS message\n";
     std::cout << "7. Test phone call\n";
-    std::cout << "8. Exit\n";
-    std::cout << "Enter your choice (1-8): ";
+    if (comm_gateway->isSMSorVoice) {
+        std::cout << "8. Currently using SMS mode. Switch to Voice mode\n";
+    }
+    else {
+        std::cout << "8. Currently using Voice mode. Switch to SMS mode\n";
+    }
+    std::cout << "9. Exit\n";
+    std::cout << "Enter your choice (1-9): ";
 }
 
 void Controller::ConsoleMenuHandler() {
@@ -95,6 +101,9 @@ void Controller::ConsoleMenuHandler() {
                 this->TestPhoneCall();
                 break;
             case 8:
+                comm_gateway->isSMSorVoice = !comm_gateway->isSMSorVoice;
+                break;
+            case 9:
                 std::cout << "Exiting program.\n";
                 return;
             default:
