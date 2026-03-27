@@ -57,8 +57,9 @@ void Controller::DisplayMenu() {
     else {
         std::cout << "8. Currently using Voice mode. Switch to SMS mode\n";
     }
-    std::cout << "9. Exit\n";
-    std::cout << "Enter your choice (1-9): ";
+    std::cout << "9. Set phone number\n";
+    std::cout << "10. Exit\n";
+    std::cout << "Enter your choice (1-10): ";
 }
 
 void Controller::ConsoleMenuHandler() {
@@ -73,7 +74,7 @@ void Controller::ConsoleMenuHandler() {
         if (std::cin.fail()) {
             std::cin.clear();
             std::cin.ignore(10000, '\n');
-            std::cout << "Invalid input. Please enter a number between 1 and 6.\n";
+            std::cout << "Invalid input. Please enter a number between 1 and 10.\n";
             continue;
         }
 
@@ -103,11 +104,20 @@ void Controller::ConsoleMenuHandler() {
             case 8:
                 comm_gateway->isSMSorVoice = !comm_gateway->isSMSorVoice;
                 break;
-            case 9:
+            case 9: {
+                std::string number;
+                std::cout << "Enter phone number: ";
+                std::cin >> number;
+
+                comm_gateway->setPhoneNumber(number);
+                std::cout << "Phone number set to: " << comm_gateway->getPhoneNumber() << std::endl;
+                break;
+            }
+            case 10:
                 std::cout << "Exiting program.\n";
                 return;
             default:
-                std::cout << "Invalid choice. Please select a number between 1 and 8.\n";
+                std::cout << "Invalid choice. Please select a number between 1 and 10.\n";
         }
     }
 }

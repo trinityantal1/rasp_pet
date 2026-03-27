@@ -9,6 +9,13 @@ public:
     void SendSMS(std::string message);
     void SendPhoneCall(std::string message);
     void SendAlert();
+    std::string getPhoneNumber() const {
+        return to_number;
+    }
+
+    void setPhoneNumber(const std::string& number) {
+        to_number = number;
+    }
 
     bool isSMSorVoice = true; // true for SMS, false for voice call;
 

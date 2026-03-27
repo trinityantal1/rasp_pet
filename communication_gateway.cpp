@@ -107,7 +107,6 @@ void CommGateway::SendSMS(std::string message) {
         // POST form data
         // Problem this way: creating a temporary string that gets destroyed at the end of the statement, 
         // but libcurl doesn't immediately copy the POST data - it only stores the pointer and uses it later when you call curl_easy_perform().
-        // curl_easy_setopt(curl, CURLOPT_POSTFIELDS, ("To=" + to_number + "&From=" + from_number + "&Body=" + message).c_str());  // result error: A 'To' phone number is required
         std::string post_data = "To=" + to_number + "&From=" + from_number + "&Body=" + message;
         std::cout << "POST data: " << post_data << std::endl;
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post_data.c_str());
@@ -117,7 +116,7 @@ void CommGateway::SendSMS(std::string message) {
         headers = curl_slist_append(headers, "Content-Type: application/x-www-form-urlencoded");
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 
-        // Follow redirects and ignore SSL peer verification (for testing; use CA bundle in production)
+        // Follow redirects and ignore SSL peer verification
         curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
 

@@ -74,9 +74,6 @@ void CameraController::CameraRequestComplete(Request* request) {
         isTerminate = !m_isMonitoringMode;
     }
 
-    //std::cout << "requestComplete() 3" << std::endl;
-    // std::cout << "AE Converged: " << aeConverged << " isSaveBmp: " << isSaveBmp << " isTerminate: " << isTerminate << " m_isTakeOnlySinglePhotoMode: " << m_isTakeOnlySinglePhotoMode << std::endl;
-
     if (isSaveBmp) {
         // Converged or timeout, save the image
         const auto &buffers = request->buffers();
@@ -197,8 +194,6 @@ void CameraController::StopCameraLoop() {
 
 void CameraController::TakePhotoToFile(std::string imgFilename) {
 
-    std::cout << "Debug 1" << std::endl;
-
     this->m_imgFilename = imgFilename;
     m_isTakeOnlySinglePhotoMode = true; // take single photo;
 
@@ -231,8 +226,6 @@ void CameraController::ActivateCamera() {
         return;
     }
 
-    std::cout << "Debug 2" << std::endl;
-
     std::unique_ptr<CameraConfiguration> config = m_camera->generateConfiguration({StreamRole::StillCapture});
     if (!config) {
         std::cerr << "Failed to generate configuration" << std::endl;
@@ -253,24 +246,19 @@ void CameraController::ActivateCamera() {
         return;
     }
 
-    std::cout << "Debug 3" << std::endl;
-
     std::unique_ptr<FrameBufferAllocator> allocator = std::make_unique<FrameBufferAllocator>(m_camera);
     std::cout << "Debug 4" << std::endl;
     ret = allocator->allocate(streamConfig.stream());
-    std::cout << "Debug 5" << std::endl;
     if (ret < 0) {
         std::cerr << "Failed to allocate buffers: " << ret << std::endl;
         return;
     }
-    std::cout << "Debug 6" << std::endl;
 
     const std::vector<std::unique_ptr<FrameBuffer>> &buffers = allocator->buffers(streamConfig.stream());
     if (buffers.empty()) {
         std::cerr << "No buffers allocated" << std::endl;
         return;
     }
-    std::cout << "Debug 7" << std::endl;
 
     std::unique_ptr<Request> request = m_camera->createRequest();
     if (!request) {
@@ -278,15 +266,11 @@ void CameraController::ActivateCamera() {
         return;
     }
 
-    std::cout << "Debug 8" << std::endl;
-
     ret = request->addBuffer(streamConfig.stream(), buffers[0].get());
     if (ret) {
         std::cerr << "Failed to add buffer to request: " << ret << std::endl;
         return;
     }
-
-    std::cout << "Debug 9" << std::endl;
 
     m_camera->requestCompleted.connect(requestComplete);
 
@@ -296,8 +280,6 @@ void CameraController::ActivateCamera() {
     controls.set(controls::AeEnable, true);
     controls.set(controls::AwbEnable, true);
     controls.set(controls::AfMode, controls::AfModeAuto);
-
-    std::cout << "Debug 10" << std::endl;
 
     ret = m_camera->start(&controls);
     if (ret) {
@@ -312,21 +294,14 @@ void CameraController::ActivateCamera() {
         return;
     }
 
-    std::cout << "Debug 11. Waiting for completion..." << std::endl;
-
     // Wait for completion
     {
         std::unique_lock<std::mutex> lock(m_mutex);
         m_cv.wait(lock, [] { return g_cameraController->m_done; });
     }
 
-    std::cout << "Debug 11...\n";
-
     m_camera->stop();
     m_camera->release();
     m_camera.reset();
-    // cm->stop();  // should release camera manager, fix it later
-    // cm.reset();
-    // delete cm;
 }
 
